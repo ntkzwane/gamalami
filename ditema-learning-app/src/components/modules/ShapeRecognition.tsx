@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../../context/AppContext';
 import { VowelSymbol } from '../../types/ditema';
 import './ShapeRecognition.css';
@@ -45,7 +45,7 @@ const ShapeRecognition: React.FC = () => {
     if (correct) {
       setScore(prev => prev + 10);
       setStreak(prev => prev + 1);
-      setCompletedVowels(prev => new Set([...prev, vowelKey]));
+      setCompletedVowels(prev => new Set(Array.from(prev).concat(vowelKey)));
     } else {
       setStreak(0);
     }

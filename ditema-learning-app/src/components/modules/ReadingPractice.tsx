@@ -1,12 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useLanguage } from '../../context/AppContext';
-import { DitemaRenderer } from '../../utils/DitemaRenderer';
-import { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
+import React, { useState } from 'react';
 import './ReadingPractice.css';
 
 const ReadingPractice: React.FC = () => {
-  const { selectedLanguage } = useLanguage();
-  const [renderer, setRenderer] = useState<DitemaRenderer | null>(null);
   const [currentStory, setCurrentStory] = useState(0);
   const [userInput, setUserInput] = useState('');
   const [score, setScore] = useState(0);
@@ -44,12 +39,6 @@ const ReadingPractice: React.FC = () => {
     }
   ];
 
-  useEffect(() => {
-    if (selectedLanguage) {
-      const ditemaRenderer = new DitemaRenderer(selectedLanguage);
-      setRenderer(ditemaRenderer);
-    }
-  }, [selectedLanguage]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(event.target.value.toLowerCase().trim());
@@ -60,7 +49,7 @@ const ReadingPractice: React.FC = () => {
     if (userInput === currentStoryData.latinText.toLowerCase()) {
       setScore(prev => prev + 30);
       setStreak(prev => prev + 1);
-      setCompletedStories(prev => new Set([...prev, currentStory]));
+      setCompletedStories(prev => new Set(Array.from(prev).concat(currentStory)));
       
       // Move to next story
       if (currentStory < stories.length - 1) {

@@ -1,0 +1,14 @@
+.ditema-canvas-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ditema-canvas {
+  display: block;
+  background: white;
+}

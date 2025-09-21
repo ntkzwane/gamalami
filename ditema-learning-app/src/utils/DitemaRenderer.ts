@@ -1,4 +1,3 @@
-import { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
 import { Language, Syllable, Word, DitemaElement, Position } from '../types/ditema';
 
 export class DitemaRenderer {
@@ -63,10 +62,10 @@ export class DitemaRenderer {
   }
 
   /**
-   * Render syllables as Excalidraw elements
+   * Render syllables as Ditema elements
    */
-  renderSyllables(syllables: Syllable[]): ExcalidrawElement[] {
-    const elements: ExcalidrawElement[] = [];
+  renderSyllables(syllables: Syllable[]): DitemaElement[] {
+    const elements: DitemaElement[] = [];
     
     syllables.forEach((syllable, index) => {
       const position: Position = {
@@ -95,39 +94,22 @@ export class DitemaRenderer {
   /**
    * Render a complete word
    */
-  renderWord(word: Word): ExcalidrawElement[] {
+  renderWord(word: Word): DitemaElement[] {
     return this.renderSyllables(word.syllables);
   }
 
   /**
    * Create triangle element for vowel
    */
-  private createTriangleElement(symbol: string, position: Position): ExcalidrawElement {
-    const trianglePoints = this.getTrianglePoints(symbol, position);
-    
+  private createTriangleElement(symbol: string, position: Position): DitemaElement {
     return {
-      id: `triangle-${Date.now()}`,
-      type: 'freedraw',
-      x: position.x - 25,
-      y: position.y - 25,
-      width: 50,
-      height: 50,
-      angle: 0,
-      strokeColor: '#1e1e1e',
-      backgroundColor: 'transparent',
-      fillStyle: 'hachure',
-      strokeWidth: 2,
-      strokeStyle: 'solid',
-      roughness: 1,
-      opacity: 100,
-      points: trianglePoints,
-      lastCommittedPoint: null,
-      startBinding: null,
-      endBinding: null,
-      boundElements: [],
-      updated: 1,
-      link: null,
-      locked: false
+      type: 'triangle',
+      position: position,
+      properties: {
+        size: 50,
+        color: '#667eea',
+        rotation: this.getTriangleRotation(symbol)
+      }
     };
   }
 
@@ -138,77 +120,30 @@ export class DitemaRenderer {
     consonant: any, 
     basePosition: Position, 
     triangleDirection: string
-  ): ExcalidrawElement {
+  ): DitemaElement {
     const position = this.getConsonantPosition(basePosition, consonant.mark, triangleDirection);
     
     return {
-      id: `consonant-${Date.now()}`,
-      type: 'ellipse',
-      x: position.x,
-      y: position.y,
-      width: consonant.mark.size === 'small' ? 10 : consonant.mark.size === 'medium' ? 20 : 30,
-      height: consonant.mark.size === 'small' ? 10 : consonant.mark.size === 'medium' ? 20 : 30,
-      angle: 0,
-      strokeColor: '#1e1e1e',
-      backgroundColor: consonant.mark.type === 'dot' ? '#1e1e1e' : 'transparent',
-      fillStyle: 'solid',
-      strokeWidth: 2,
-      strokeStyle: 'solid',
-      roughness: 1,
-      opacity: 100,
-      points: [],
-      lastCommittedPoint: null,
-      startBinding: null,
-      endBinding: null,
-      boundElements: [],
-      updated: 1,
-      link: null,
-      locked: false
+      type: consonant.mark.type === 'dot' ? 'dot' : 'circle',
+      position: position,
+      properties: {
+        size: consonant.mark.size === 'small' ? 10 : consonant.mark.size === 'medium' ? 20 : 30,
+        color: '#1e1e1e',
+        opacity: consonant.mark.type === 'dot' ? 1.0 : 0.8
+      }
     };
   }
 
   /**
-   * Get triangle points based on direction
+   * Get triangle rotation based on symbol
    */
-  private getTrianglePoints(symbol: string, position: Position): number[][] {
-    const size = 25;
-    
+  private getTriangleRotation(symbol: string): number {
     switch (symbol) {
-      case '△': // up
-        return [
-          [position.x, position.y - size],
-          [position.x - size, position.y + size],
-          [position.x + size, position.y + size],
-          [position.x, position.y - size]
-        ];
-      case '▽': // down
-        return [
-          [position.x, position.y + size],
-          [position.x - size, position.y - size],
-          [position.x + size, position.y - size],
-          [position.x, position.y + size]
-        ];
-      case '◁': // left
-        return [
-          [position.x - size, position.y],
-          [position.x + size, position.y - size],
-          [position.x + size, position.y + size],
-          [position.x - size, position.y]
-        ];
-      case '▷': // right
-        return [
-          [position.x + size, position.y],
-          [position.x - size, position.y - size],
-          [position.x - size, position.y + size],
-          [position.x + size, position.y]
-        ];
-      default:
-        return [
-          [position.x, position.y - size],
-          [position.x - size, position.y + size],
-          [position.x + size, position.y + size],
-          [position.x, position.y - size]
-        ];
+      case '△': return 0;    // up
+      case '▽': return 180;  // down
+      case '◁': return 270;  // left
+      case '▷': return 90;   // right
+      default: return 0;
     }
   }
 

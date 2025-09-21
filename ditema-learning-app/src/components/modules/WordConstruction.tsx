@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Excalidraw } from '@excalidraw/excalidraw';
 import { useLanguage } from '../../context/AppContext';
 import { DitemaRenderer } from '../../utils/DitemaRenderer';
-import { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
+import { DitemaElement } from '../../types/ditema';
 import { sampleWords } from '../../data/ditemaData';
+import DitemaCanvas from '../DitemaCanvas';
 import './WordConstruction.css';
 
 const WordConstruction: React.FC = () => {
   const { selectedLanguage } = useLanguage();
   const [renderer, setRenderer] = useState<DitemaRenderer | null>(null);
-  const [excalidrawElements, setExcalidrawElements] = useState<ExcalidrawElement[]>([]);
+  const [ditemaElements, setDitemaElements] = useState<DitemaElement[]>([]);
   const [inputText, setInputText] = useState('');
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [showHint, setShowHint] = useState(false);
@@ -32,7 +32,7 @@ const WordConstruction: React.FC = () => {
     if (inputText && renderer) {
       const syllables = renderer.parseSyllables(inputText);
       const elements = renderer.renderSyllables(syllables);
-      setExcalidrawElements(elements);
+      setDitemaElements(elements);
     }
   }, [inputText, renderer]);
 
@@ -45,13 +45,13 @@ const WordConstruction: React.FC = () => {
     if (inputText.trim() === currentWord.latin) {
       setScore(prev => prev + 20);
       setStreak(prev => prev + 1);
-      setCompletedWords(prev => new Set([...prev, currentWordIndex]));
+      setCompletedWords(prev => new Set(Array.from(prev).concat(currentWordIndex)));
       
       // Move to next word
       if (currentWordIndex < availableWords.length - 1) {
         setCurrentWordIndex(prev => prev + 1);
         setInputText('');
-        setExcalidrawElements([]);
+        setDitemaElements([]);
       } else {
         console.log('All words completed!');
       }
@@ -76,7 +76,7 @@ const WordConstruction: React.FC = () => {
   const handleSkip = () => {
     setCurrentWordIndex(prev => prev + 1);
     setInputText('');
-    setExcalidrawElements([]);
+    setDitemaElements([]);
     setStreak(0);
   };
 
@@ -198,14 +198,7 @@ const WordConstruction: React.FC = () => {
             <div className="ditema-display">
               <h4>Your Ditema Script</h4>
               <div className="drawing-area">
-                <Excalidraw
-                  initialElements={excalidrawElements}
-                  onChange={(elements) => setExcalidrawElements(elements)}
-                  viewModeEnabled={false}
-                  zenModeEnabled={false}
-                  gridModeEnabled={true}
-                  theme="light"
-                />
+                <DitemaCanvas elements={ditemaElements} width={300} height={200} />
               </div>
             </div>
 

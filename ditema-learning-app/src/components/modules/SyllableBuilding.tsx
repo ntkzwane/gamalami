@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Excalidraw } from '@excalidraw/excalidraw';
 import { useLanguage } from '../../context/AppContext';
 import { DitemaRenderer } from '../../utils/DitemaRenderer';
-import { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
+import { DitemaElement } from '../../types/ditema';
+import DitemaCanvas from '../DitemaCanvas';
 import './SyllableBuilding.css';
 
 const SyllableBuilding: React.FC = () => {
   const { selectedLanguage } = useLanguage();
   const [renderer, setRenderer] = useState<DitemaRenderer | null>(null);
-  const [excalidrawElements, setExcalidrawElements] = useState<ExcalidrawElement[]>([]);
+  const [ditemaElements, setDitemaElements] = useState<DitemaElement[]>([]);
   const [currentExercise, setCurrentExercise] = useState(0);
   const [selectedConsonant, setSelectedConsonant] = useState<string | null>(null);
   const [selectedVowel, setSelectedVowel] = useState<string | null>(null);
@@ -65,7 +65,7 @@ const SyllableBuilding: React.FC = () => {
       const targetConsonant = exercises[currentExercise].consonant;
       const targetVowel = exercises[currentExercise].vowel;
       
-      const correct = consonantKey === targetVowel && selectedConsonant === targetConsonant;
+      const correct = vowelKey === targetVowel && selectedConsonant === targetConsonant;
       setIsCorrect(correct);
       setShowFeedback(true);
       
@@ -77,7 +77,7 @@ const SyllableBuilding: React.FC = () => {
         if (renderer) {
           const syllables = renderer.parseSyllables(exercises[currentExercise].target);
           const elements = renderer.renderSyllables(syllables);
-          setExcalidrawElements(elements);
+          setDitemaElements(elements);
         }
       } else {
         setStreak(0);
@@ -88,8 +88,8 @@ const SyllableBuilding: React.FC = () => {
         setSelectedConsonant(null);
         setSelectedVowel(null);
         if (currentExercise < exercises.length - 1) {
-          setCurrentExercise(prev => prev + 1);
-          setExcalidrawElements([]);
+        setCurrentExercise(prev => prev + 1);
+        setDitemaElements([]);
         } else {
           console.log('Module completed!');
         }
@@ -194,17 +194,10 @@ const SyllableBuilding: React.FC = () => {
                 </div>
               </div>
 
-              <div className="excalidraw-container">
+              <div className="ditema-container">
                 <h4>Your Syllable</h4>
                 <div className="drawing-area">
-                  <Excalidraw
-                    initialElements={excalidrawElements}
-                    onChange={(elements) => setExcalidrawElements(elements)}
-                    viewModeEnabled={false}
-                    zenModeEnabled={false}
-                    gridModeEnabled={true}
-                    theme="light"
-                  />
+                  <DitemaCanvas elements={ditemaElements} width={300} height={200} />
                 </div>
               </div>
             </div>
