@@ -31,28 +31,28 @@ export function generateVowelShape(vowelSegment, x, y, size = 60) {
             break;
             
         case 'u':
-            // Left-pointing triangle ◁
-            points = getTrianglePoints(x, y, size, 'left');
+            // Upward chevron (upward-pointing V shape)
+            points = getTrianglePoints(x, y, size, 'up-chevron');
             break;
             
         case 'o':
-            // Right-pointing triangle ▷
-            points = getTrianglePoints(x, y, size, 'right');
-            break;
-            
-        case 'ɔ': // open o
-            // Right-pointing triangle with modification
-            points = getTrianglePoints(x, y, size, 'right');
+            // Rightward chevron (right-pointing V shape)
+            points = getTrianglePoints(x, y, size, 'right-chevron');
             break;
             
         case 'e':
-            // Context-dependent - default to up-right diagonal
-            points = getTrianglePoints(x, y, size, 'up-right');
+            // Leftward chevron (left-pointing V shape)
+            points = getTrianglePoints(x, y, size, 'left-chevron');
             break;
             
         case 'ɛ': // open e
-            // Left-up diagonal triangle
-            points = getTrianglePoints(x, y, size, 'up-left');
+            // Leftward triangle ◁
+            points = getTrianglePoints(x, y, size, 'left');
+            break;
+            
+        case 'ɔ': // open o
+            // Rightward triangle ▷
+            points = getTrianglePoints(x, y, size, 'right');
             break;
             
         default:
@@ -155,6 +155,33 @@ function getTrianglePoints(centerX, centerY, size, orientation) {
                 [centerX + halfSize, centerY],                // right
                 [centerX, centerY + halfHeight],               // bottom
                 [centerX - halfHeight, centerY - halfHeight]   // back to start
+            ];
+            
+        case 'up-chevron':
+            // Upward-pointing V shape (chevron) for 'u'
+            return [
+                [centerX - halfSize, centerY + halfHeight],   // bottom left
+                [centerX, centerY - halfHeight],              // top point
+                [centerX + halfSize, centerY + halfHeight],   // bottom right
+                [centerX - halfSize, centerY + halfHeight]    // back to start
+            ];
+            
+        case 'left-chevron':
+            // Left-pointing V shape (chevron) for 'e'
+            return [
+                [centerX + halfHeight, centerY - halfSize],   // top right
+                [centerX - halfHeight, centerY],              // left point
+                [centerX + halfHeight, centerY + halfSize],   // bottom right
+                [centerX + halfHeight, centerY - halfSize]    // back to start
+            ];
+            
+        case 'right-chevron':
+            // Right-pointing V shape (chevron) for 'o'
+            return [
+                [centerX - halfHeight, centerY - halfSize],   // top left
+                [centerX + halfHeight, centerY],              // right point
+                [centerX - halfHeight, centerY + halfSize],   // bottom left
+                [centerX - halfHeight, centerY - halfSize]    // back to start
             ];
             
         default:

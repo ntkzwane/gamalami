@@ -50,7 +50,23 @@ export function latinToPhonetic(word, language = 'zulu') {
                     phonetic: rules.prenasalized[digraph],
                     type: 'consonant',
                     features: getConsonantFeatures(rules.prenasalized[digraph]),
-                    prenasalized: true
+                    prenasalized: true,
+                    isComplex: true // Mark as complex unit
+                });
+                i += 2;
+                matched = true;
+            }
+            // Check for nasal + consonant combinations (like "nt", "nk")
+            else if (digraph[0] === 'n' && rules.consonants[digraph[1]]) {
+                // Create prenasalized consonant
+                const baseConsonant = rules.consonants[digraph[1]];
+                segments.push({
+                    orthographic: digraph,
+                    phonetic: 'ⁿ' + baseConsonant, // Add prenasalization marker
+                    type: 'consonant',
+                    features: getConsonantFeatures(baseConsonant),
+                    prenasalized: true,
+                    isComplex: true
                 });
                 i += 2;
                 matched = true;

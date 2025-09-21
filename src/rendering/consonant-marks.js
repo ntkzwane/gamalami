@@ -111,62 +111,91 @@ function getConsonantMarkInfo(consonant, features) {
 }
 
 /**
- * Determine consonant position relative to vowel
+ * Determine consonant position relative to vowel based on Ditema specifications
  * @param {Object} features - Consonant features
  * @param {Object} anchorPoints - Vowel anchor points
  * @param {number} index - Index for multiple consonants
  * @returns {Object} Position information
  */
 function getConsonantPosition(features, anchorPoints, index) {
-    let basePosition = 'top'; // Default position
+    let basePosition = 'middle'; // Default position
     
-    // Position based on place of articulation
+    // Position based on place of articulation (according to Ditema specifications)
     switch (features.place) {
         case 'bilabial':
         case 'labiodental':
-            basePosition = 'top';
+            // Labials and nasals: outside the triangle at the apex
+            basePosition = 'apex';
             break;
         case 'alveolar':
         case 'postalveolar':
+            // Alveolars: across the middle of the triangle
             basePosition = 'middle';
             break;
         case 'velar':
+        case 'uvular':
         case 'glottal':
-            basePosition = 'bottom';
+            // Velars and palatals: at the base
+            basePosition = 'base';
             break;
         case 'dental':
-            basePosition = 'top';
+            // Dentals: two parallel lines across the triangle
+            basePosition = 'middle-double';
             break;
         case 'lateral':
-            basePosition = 'left';
+            // Laterals: outside the triangle on one side
+            basePosition = 'side';
             break;
+        case 'palatal':
+            basePosition = 'base';
+            break;
+    }
+    
+    // Special handling for nasals
+    if (features.manner === 'nasal') {
+        basePosition = 'apex'; // Nasals go at the apex regardless of place
     }
     
     // Adjust for multiple consonants
     if (index > 0) {
-        const positions = ['top', 'middle', 'bottom', 'left', 'right'];
+        const positions = ['apex', 'middle', 'base', 'side'];
         const nextPosition = positions[(positions.indexOf(basePosition) + index) % positions.length];
         basePosition = nextPosition;
     }
     
-    // Get actual coordinates
+    // Get actual coordinates based on position
     let coordinates;
     switch (basePosition) {
-        case 'top':
-            coordinates = anchorPoints.top;
-            break;
-        case 'bottom':
-            coordinates = anchorPoints.bottom;
-            break;
-        case 'left':
-            coordinates = anchorPoints.left;
-            break;
-        case 'right':
-            coordinates = anchorPoints.right;
+        case 'apex':
+            // At the apex (tip) of the triangle - varies by vowel orientation
+            coordinates = getApexPosition(anchorPoints);
             break;
         case 'middle':
+            // Across the middle of the triangle
+            coordinates = {
+                x: (anchorPoints.left.x + anchorPoints.right.x) / 2,
+                y: (anchorPoints.top.y + anchorPoints.bottom.y) / 2
+            };
+            break;
+        case 'base':
+            // At the base of the triangle
+            coordinates = getBasePosition(anchorPoints);
+            break;
+        case 'side':
+            // Outside the triangle on one side
+            coordinates = {
+                x: anchorPoints.left.x - 15, // Offset to the left side
+                y: (anchorPoints.top.y + anchorPoints.bottom.y) / 2
+            };
+            break;
+        case 'middle-double':
+            // For dentals - will create two parallel lines
+            coordinates = {
+                x: (anchorPoints.left.x + anchorPoints.right.x) / 2,
+                y: (anchorPoints.top.y + anchorPoints.bottom.y) / 2
+            };
+            break;
         default:
-            // Position through the center
             coordinates = {
                 x: (anchorPoints.left.x + anchorPoints.right.x) / 2,
                 y: (anchorPoints.top.y + anchorPoints.bottom.y) / 2
@@ -178,6 +207,27 @@ function getConsonantPosition(features, anchorPoints, index) {
         coordinates: coordinates,
         anchorPoints: anchorPoints
     };
+}
+
+/**
+ * Get apex position based on vowel triangle orientation
+ * @param {Object} anchorPoints - Vowel anchor points
+ * @returns {Object} Apex coordinates
+ */
+function getApexPosition(anchorPoints) {
+    // For most vowels, the apex is the top point
+    // This could be refined based on the specific vowel triangle orientation
+    return anchorPoints.top;
+}
+
+/**
+ * Get base position based on vowel triangle orientation
+ * @param {Object} anchorPoints - Vowel anchor points
+ * @returns {Object} Base coordinates
+ */
+function getBasePosition(anchorPoints) {
+    // For most vowels, the base is the bottom area
+    return anchorPoints.bottom;
 }
 
 /**

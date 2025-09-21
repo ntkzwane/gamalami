@@ -4,7 +4,7 @@
  */
 
 /**
- * Parse phonetic segments into syllable structures
+ * Parse phonetic segments into syllable structures following Bantu phonotactics
  * @param {Array} segments - Array of phonetic segments from latin-to-ipa.js
  * @returns {Array} Array of syllable objects with CV structure
  */
@@ -13,68 +13,231 @@ export function parseSyllables(segments) {
         return [];
     }
     
+    // First, handle prenasalized consonants and complex segments
+    const processedSegments = preprocessSegments(segments);
+    
+    // Find vowel positions to establish syllable nuclei
+    const vowelPositions = [];
+    processedSegments.forEach((segment, index) => {
+        if (segment.type === 'vowel' || segment.syllabic) {
+            vowelPositions.push(index);
+        }
+    });
+    
+    if (vowelPositions.length === 0) {
+        // No vowels found, check for syllabic consonants
+        return handleSyllabicConsonantsOnly(processedSegments);
+    }
+    
     const syllables = [];
-    let currentSyllable = {
-        segments: [],
-        structure: '',
-        onset: [],
-        nucleus: null,
-        coda: []
-    };
     
-    let i = 0;
-    
-    while (i < segments.length) {
-        const segment = segments[i];
+    for (let i = 0; i < vowelPositions.length; i++) {
+        const vowelIndex = vowelPositions[i];
+        const nextVowelIndex = vowelPositions[i + 1];
         
-        if (segment.type === 'vowel') {
-            // If we already have a nucleus, start new syllable
-            if (currentSyllable.nucleus) {
-                // Finish current syllable
-                syllables.push(completeSyllable(currentSyllable));
-                
-                // Start new syllable
-                currentSyllable = {
-                    segments: [],
-                    structure: '',
-                    onset: [],
-                    nucleus: null,
-                    coda: []
-                };
-            }
-            
-            // Set this vowel as nucleus
-            currentSyllable.nucleus = segment;
-            currentSyllable.segments.push(segment);
-            currentSyllable.structure += 'V';
-            
-        } else if (segment.type === 'consonant') {
-            currentSyllable.segments.push(segment);
-            
-            if (!currentSyllable.nucleus) {
-                // This consonant is part of onset
-                currentSyllable.onset.push(segment);
-                currentSyllable.structure += 'C';
-            } else {
-                // This consonant is part of coda
-                currentSyllable.coda.push(segment);
-                currentSyllable.structure += 'C';
+        const syllable = {
+            segments: [],
+            structure: '',
+            onset: [],
+            nucleus: null,
+            coda: []
+        };
+        
+        // Set the vowel as nucleus
+        syllable.nucleus = processedSegments[vowelIndex];
+        syllable.segments.push(processedSegments[vowelIndex]);
+        syllable.structure += 'V';
+        
+        // Determine onset consonants
+        if (i === 0) {
+            // First syllable: take all consonants before the first vowel
+            for (let j = 0; j < vowelIndex; j++) {
+                if (processedSegments[j].type === 'consonant') {
+                    syllable.onset.push(processedSegments[j]);
+                    syllable.segments.unshift(processedSegments[j]);
+                    syllable.structure = 'C' + syllable.structure;
+                }
             }
         } else {
-            // Unknown or other segments
-            currentSyllable.segments.push(segment);
+            // Handle prenasalized consonants specially - they should be split
+            const prenasalizedBetween = [];
+            for (let j = vowelPositions[i - 1] + 1; j < vowelIndex; j++) {
+                if (processedSegments[j].prenasalized) {
+                    prenasalizedBetween.push({ index: j, segment: processedSegments[j] });
+                }
+            }
+            
+            // If there's a prenasalized consonant, handle it specially
+            if (prenasalizedBetween.length > 0) {
+                const prenasalized = prenasalizedBetween[0];
+                
+                // Add just the consonant part (without nasal) to this syllable's onset
+                const consonantPart = prenasalized.segment.phonetic.replace(/[ⁿᵐᵑ]/g, '');
+                syllable.onset.push({
+                    ...prenasalized.segment,
+                    phonetic: consonantPart,
+                    orthographic: prenasalized.segment.orthographic.replace(/^n/g, ''), // Remove 'n' prefix
+                    prenasalized: false
+                });
+                syllable.segments.unshift(syllable.onset[0]);
+                syllable.structure = 'C' + syllable.structure;
+                
+                // Add the nasal part to the previous syllable's coda (if it exists)
+                if (syllables.length > 0) {
+                    const prevSyllable = syllables[syllables.length - 1];
+                    const nasalPart = {
+                        orthographic: 'n',
+                        phonetic: 'n',
+                        type: 'consonant',
+                        features: { manner: 'nasal', place: 'alveolar', voice: 'voiced' }
+                    };
+                    prevSyllable.coda.push(nasalPart);
+                    prevSyllable.segments.push(nasalPart);
+                    prevSyllable.structure += 'C';
+                    prevSyllable.orthographic += 'n';
+                    prevSyllable.phonetic += 'n';
+                }
+            } else {
+                // Regular onset handling
+                const onsetStart = findOnsetStart(processedSegments, vowelPositions[i - 1], vowelIndex);
+                
+                for (let j = onsetStart; j < vowelIndex; j++) {
+                    if (processedSegments[j].type === 'consonant' && !processedSegments[j].prenasalized) {
+                        syllable.onset.push(processedSegments[j]);
+                        syllable.segments.unshift(processedSegments[j]); // Add to beginning
+                        syllable.structure = 'C' + syllable.structure;
+                    }
+                }
+            }
         }
         
-        i++;
+        // Determine coda (consonants after this vowel, before next vowel)
+        // In Bantu languages, codas are rare, so we're conservative here
+        const codaEnd = nextVowelIndex ? findCodaEnd(processedSegments, vowelIndex, nextVowelIndex) : processedSegments.length;
+        
+        for (let j = vowelIndex + 1; j < codaEnd; j++) {
+            if (processedSegments[j].type === 'consonant' && !processedSegments[j].prenasalized) {
+                // In Bantu languages, most consonants go with the next syllable
+                // Only add to coda if it's clearly syllable-final
+                if (!nextVowelIndex || j === processedSegments.length - 1) {
+                    syllable.coda.push(processedSegments[j]);
+                    syllable.segments.push(processedSegments[j]);
+                    syllable.structure += 'C';
+                }
+            }
+        }
+        
+        syllables.push(completeSyllable(syllable));
     }
     
-    // Complete final syllable
-    if (currentSyllable.segments.length > 0) {
-        syllables.push(completeSyllable(currentSyllable));
+    return syllables;
+}
+
+/**
+ * Preprocess segments to handle prenasalized consonants and complex sounds
+ * @param {Array} segments - Raw phonetic segments
+ * @returns {Array} Processed segments
+ */
+function preprocessSegments(segments) {
+    const processed = [];
+    
+    for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
+        
+        // Handle prenasalized consonants as single units - they are indivisible
+        if (segment.prenasalized || segment.isComplex) {
+            // Mark as complex so it won't be split in syllable parsing
+            segment.indivisible = true;
+            processed.push(segment);
+        }
+        // Handle syllabic consonants
+        else if (segment.type === 'consonant' && ['m', 'n', 'l', 'r', 'ŋ'].includes(segment.phonetic)) {
+            // Check if this could be syllabic (no adjacent vowels)
+            const hasAdjacentVowel = (i > 0 && segments[i-1].type === 'vowel') || 
+                                   (i < segments.length - 1 && segments[i+1].type === 'vowel');
+            
+            if (!hasAdjacentVowel) {
+                segment.syllabic = true;
+            }
+            processed.push(segment);
+        }
+        else {
+            processed.push(segment);
+        }
     }
     
-    // Handle syllabic consonants (m̥, n̥, l̥, r̥)
-    return processSyllabicConsonants(syllables);
+    return processed;
+}
+
+/**
+ * Find where the onset for a syllable should start
+ * @param {Array} segments - All segments
+ * @param {number} prevVowelIndex - Index of previous vowel
+ * @param {number} currentVowelIndex - Index of current vowel
+ * @returns {number} Start index for onset
+ */
+function findOnsetStart(segments, prevVowelIndex, currentVowelIndex) {
+    const consonantsBetween = currentVowelIndex - prevVowelIndex - 1;
+    
+    if (consonantsBetween === 0) {
+        return currentVowelIndex; // No consonants between vowels
+    } else if (consonantsBetween === 1) {
+        return prevVowelIndex + 1; // Single consonant goes with next syllable
+    } else {
+        // Multiple consonants: check for indivisible units
+        let splitPoint = prevVowelIndex + 1;
+        
+        // Look for indivisible consonants (prenasalized, etc.)
+        for (let i = prevVowelIndex + 1; i < currentVowelIndex; i++) {
+            const segment = segments[i];
+            if (segment.indivisible || segment.prenasalized) {
+                // This entire consonant unit goes with the next syllable
+                // Don't split it
+                splitPoint = i;
+                break;
+            }
+        }
+        
+        // If no indivisible units found, use traditional splitting
+        if (splitPoint === prevVowelIndex + 1) {
+            splitPoint = prevVowelIndex + 1 + Math.floor(consonantsBetween / 2);
+        }
+        
+        return splitPoint;
+    }
+}
+
+/**
+ * Find where the coda for a syllable should end
+ * @param {Array} segments - All segments
+ * @param {number} vowelIndex - Index of current vowel
+ * @param {number} nextVowelIndex - Index of next vowel
+ * @returns {number} End index for coda
+ */
+function findCodaEnd(segments, vowelIndex, nextVowelIndex) {
+    // In Bantu languages, codas are very rare
+    // Most consonants go with the following vowel
+    return vowelIndex + 1; // No coda in most cases
+}
+
+/**
+ * Handle cases where there are only syllabic consonants
+ * @param {Array} segments - Processed segments
+ * @returns {Array} Array of syllable objects
+ */
+function handleSyllabicConsonantsOnly(segments) {
+    return segments.map(segment => {
+        if (segment.type === 'consonant' && ['m', 'n', 'l', 'r', 'ŋ'].includes(segment.phonetic)) {
+            return completeSyllable({
+                segments: [segment],
+                structure: 'Ṽ', // Syllabic consonant
+                onset: [],
+                nucleus: { ...segment, syllabic: true, type: 'syllabic_consonant' },
+                coda: []
+            });
+        }
+        return null;
+    }).filter(Boolean);
 }
 
 /**
