@@ -1,0 +1,23 @@
+{
+  "name": "ditema-tsa-dinoko-web-tool",
+  "version": "1.0.0",
+  "description": "Web application for translating Latin alphabet text to Ditema tsa Dinoko script",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8000"
+  },
+  "dependencies": {
+    "@excalidraw/excalidraw": "^0.17.0"
+  },
+  "keywords": [
+    "ditema-tsa-dinoko",
+    "southern-african-languages",
+    "bantu-languages",
+    "script-translation",
+    "excalidraw"
+  ],
+  "author": "Ditema Web Tool",
+  "license": "MIT"
+}
