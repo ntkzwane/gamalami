@@ -2,6 +2,56 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { DitemaElement } from '../types/ditema';
 import './DitemaCanvas.css';
 
+// Drawing functions moved outside component to prevent recreation
+const drawTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+  const halfSize = size / 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y - halfSize);
+  ctx.lineTo(x - halfSize, y + halfSize);
+  ctx.lineTo(x + halfSize, y + halfSize);
+  ctx.closePath();
+  ctx.stroke();
+  
+  // Add a subtle fill
+  ctx.fillStyle = 'rgba(102, 126, 234, 0.1)';
+  ctx.fill();
+  ctx.fillStyle = '#667eea'; // Reset for other elements
+};
+
+const drawCircle = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+  const radius = size / 2;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, 2 * Math.PI);
+  ctx.stroke();
+  
+  // Add a subtle fill
+  ctx.fillStyle = 'rgba(30, 30, 30, 0.05)';
+  ctx.fill();
+  ctx.fillStyle = '#1e1e1e'; // Reset for other elements
+};
+
+const drawDot = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+  const radius = size / 2;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, 2 * Math.PI);
+  ctx.fill();
+};
+
+const drawLine = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+  ctx.beginPath();
+  ctx.moveTo(x - size / 2, y);
+  ctx.lineTo(x + size / 2, y);
+  ctx.stroke();
+};
+
+const drawCurve = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+  const halfSize = size / 2;
+  ctx.beginPath();
+  ctx.moveTo(x - halfSize, y);
+  ctx.quadraticCurveTo(x, y - halfSize, x + halfSize, y);
+  ctx.stroke();
+};
+
 interface DitemaCanvasProps {
   elements: DitemaElement[];
   width?: number;
@@ -71,54 +121,6 @@ const DitemaCanvas: React.FC<DitemaCanvasProps> = ({
     });
   }, [elements, width, height, drawElement]);
 
-  const drawTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
-    const halfSize = size / 2;
-    ctx.beginPath();
-    ctx.moveTo(x, y - halfSize);
-    ctx.lineTo(x - halfSize, y + halfSize);
-    ctx.lineTo(x + halfSize, y + halfSize);
-    ctx.closePath();
-    ctx.stroke();
-    
-    // Add a subtle fill
-    ctx.fillStyle = 'rgba(102, 126, 234, 0.1)';
-    ctx.fill();
-    ctx.fillStyle = '#667eea'; // Reset for other elements
-  };
-
-  const drawCircle = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
-    const radius = size / 2;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, 2 * Math.PI);
-    ctx.stroke();
-    
-    // Add a subtle fill
-    ctx.fillStyle = 'rgba(30, 30, 30, 0.05)';
-    ctx.fill();
-    ctx.fillStyle = '#1e1e1e'; // Reset for other elements
-  };
-
-  const drawDot = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
-    const radius = size / 2;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, 2 * Math.PI);
-    ctx.fill();
-  };
-
-  const drawLine = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
-    ctx.beginPath();
-    ctx.moveTo(x - size / 2, y);
-    ctx.lineTo(x + size / 2, y);
-    ctx.stroke();
-  };
-
-  const drawCurve = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
-    const halfSize = size / 2;
-    ctx.beginPath();
-    ctx.moveTo(x - halfSize, y);
-    ctx.quadraticCurveTo(x, y - halfSize, x + halfSize, y);
-    ctx.stroke();
-  };
 
   return (
     <div className="ditema-canvas-container">

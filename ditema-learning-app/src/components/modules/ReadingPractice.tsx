@@ -5,6 +5,36 @@ import { DitemaElement } from '../../types/ditema';
 import DitemaCanvas from '../DitemaCanvas';
 import './ReadingPractice.css';
 
+const stories = [
+  {
+    id: 1,
+    title: 'Ubuntu - A Story of Humanity',
+    ditemaText: 'ubuntu', // This would be rendered as Ditema
+    latinText: 'ubuntu',
+    translation: 'humanity, compassion',
+    culturalContext: 'Ubuntu is a fundamental concept in African philosophy meaning "I am because we are"',
+    difficulty: 2
+  },
+  {
+    id: 2,
+    title: 'The Family',
+    ditemaText: 'umama nobaba',
+    latinText: 'umama nobaba',
+    translation: 'mother and father',
+    culturalContext: 'Family is central to African culture, with deep respect for parents and elders',
+    difficulty: 3
+  },
+  {
+    id: 3,
+    title: 'Traditional Greeting',
+    ditemaText: 'sawubona',
+    latinText: 'sawubona',
+    translation: 'I see you (traditional greeting)',
+    culturalContext: 'This greeting acknowledges the person\'s humanity and presence',
+    difficulty: 3
+  }
+];
+
 const ReadingPractice: React.FC = () => {
   const { selectedLanguage } = useLanguage();
   const [renderer, setRenderer] = useState<DitemaRenderer | null>(null);
@@ -15,36 +45,6 @@ const ReadingPractice: React.FC = () => {
   const [streak, setStreak] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [completedStories, setCompletedStories] = useState<Set<number>>(new Set());
-
-  const stories = [
-    {
-      id: 1,
-      title: 'Ubuntu - A Story of Humanity',
-      ditemaText: 'ubuntu', // This would be rendered as Ditema
-      latinText: 'ubuntu',
-      translation: 'humanity, compassion',
-      culturalContext: 'Ubuntu is a fundamental concept in African philosophy meaning "I am because we are"',
-      difficulty: 2
-    },
-    {
-      id: 2,
-      title: 'The Family',
-      ditemaText: 'umama nobaba',
-      latinText: 'umama nobaba',
-      translation: 'mother and father',
-      culturalContext: 'Family is central to African culture, with deep respect for parents and elders',
-      difficulty: 3
-    },
-    {
-      id: 3,
-      title: 'Traditional Greeting',
-      ditemaText: 'sawubona',
-      latinText: 'sawubona',
-      translation: 'I see you (traditional greeting)',
-      culturalContext: 'This greeting acknowledges the person\'s humanity and presence',
-      difficulty: 3
-    }
-  ];
 
   useEffect(() => {
     if (selectedLanguage) {
@@ -59,7 +59,7 @@ const ReadingPractice: React.FC = () => {
       const elements = renderer.renderSyllables(syllables);
       setDitemaElements(elements);
     }
-  }, [renderer, currentStory, stories]);
+  }, [renderer, currentStory]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(event.target.value.toLowerCase().trim());
