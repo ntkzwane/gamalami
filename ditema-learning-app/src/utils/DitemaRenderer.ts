@@ -31,28 +31,46 @@ export class DitemaRenderer {
     const phonetic = this.latinToPhonetic(text);
     const syllables: Syllable[] = [];
     
-    // Simple syllable parsing - in practice, this would be more sophisticated
+    // Better syllable parsing for Ditema
     let i = 0;
     while (i < phonetic.length) {
-      const syllable: Syllable = { vowel: this.language.phoneticRules.vowels['a'] }; // default
+      const syllable: Syllable = { vowel: this.language.phoneticRules.vowels['a'] }; // default vowel
       
-      // Check for consonant
-      if (i < phonetic.length && this.isConsonant(phonetic[i])) {
-        const consonantKey = this.findConsonantKey(phonetic[i]);
-        if (consonantKey) {
-          syllable.consonant = this.language.phoneticRules.consonants[consonantKey] ||
-                              this.language.phoneticRules.digraphs[consonantKey];
+      // Check for digraphs first (e.g., 'ng', 'th', 'hl')
+      let consonantKey: string | null = null;
+      if (i + 1 < phonetic.length) {
+        const digraph = phonetic.slice(i, i + 2);
+        if (this.language.phoneticRules.digraphs[digraph]) {
+          consonantKey = digraph;
+          i += 2;
         }
-        i++;
+      }
+      
+      // Check for single consonant if no digraph found
+      if (!consonantKey && i < phonetic.length) {
+        const char = phonetic[i];
+        if (this.isConsonant(char)) {
+          consonantKey = this.findConsonantKey(char);
+          i++;
+        }
+      }
+      
+      // Set consonant if found
+      if (consonantKey) {
+        syllable.consonant = this.language.phoneticRules.consonants[consonantKey] ||
+                            this.language.phoneticRules.digraphs[consonantKey];
       }
       
       // Find vowel
-      if (i < phonetic.length && this.isVowel(phonetic[i])) {
-        const vowelKey = this.findVowelKey(phonetic[i]);
-        if (vowelKey) {
-          syllable.vowel = this.language.phoneticRules.vowels[vowelKey];
+      if (i < phonetic.length) {
+        const char = phonetic[i];
+        if (this.isVowel(char)) {
+          const vowelKey = this.findVowelKey(char);
+          if (vowelKey) {
+            syllable.vowel = this.language.phoneticRules.vowels[vowelKey];
+          }
+          i++;
         }
-        i++;
       }
       
       syllables.push(syllable);
@@ -192,6 +210,15 @@ export class DitemaRenderer {
   }
 
   private findConsonantKey(char: string): string | null {
+    // First check if the character is a direct key
+    if (this.language.phoneticRules.consonants[char]) {
+      return char;
+    }
+    if (this.language.phoneticRules.digraphs[char]) {
+      return char;
+    }
+    
+    // Then check by IPA
     for (const key of Object.keys(this.language.phoneticRules.consonants)) {
       if (this.language.phoneticRules.consonants[key].ipa === char) {
         return key;
@@ -206,6 +233,12 @@ export class DitemaRenderer {
   }
 
   private findVowelKey(char: string): string | null {
+    // First check if the character is a direct key
+    if (this.language.phoneticRules.vowels[char]) {
+      return char;
+    }
+    
+    // Then check by IPA
     for (const key of Object.keys(this.language.phoneticRules.vowels)) {
       if (this.language.phoneticRules.vowels[key].ipa === char) {
         return key;

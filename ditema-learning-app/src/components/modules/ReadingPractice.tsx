@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../../context/AppContext';
+import { DitemaRenderer } from '../../utils/DitemaRenderer';
+import { DitemaElement } from '../../types/ditema';
+import DitemaCanvas from '../DitemaCanvas';
 import './ReadingPractice.css';
 
 const ReadingPractice: React.FC = () => {
+  const { selectedLanguage } = useLanguage();
+  const [renderer, setRenderer] = useState<DitemaRenderer | null>(null);
+  const [ditemaElements, setDitemaElements] = useState<DitemaElement[]>([]);
   const [currentStory, setCurrentStory] = useState(0);
   const [userInput, setUserInput] = useState('');
   const [score, setScore] = useState(0);
@@ -39,6 +46,20 @@ const ReadingPractice: React.FC = () => {
     }
   ];
 
+  useEffect(() => {
+    if (selectedLanguage) {
+      const ditemaRenderer = new DitemaRenderer(selectedLanguage);
+      setRenderer(ditemaRenderer);
+    }
+  }, [selectedLanguage]);
+
+  useEffect(() => {
+    if (renderer && stories[currentStory]) {
+      const syllables = renderer.parseSyllables(stories[currentStory].latinText);
+      const elements = renderer.renderSyllables(syllables);
+      setDitemaElements(elements);
+    }
+  }, [renderer, currentStory, stories]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(event.target.value.toLowerCase().trim());
@@ -159,12 +180,7 @@ const ReadingPractice: React.FC = () => {
             <div className="ditema-text-display">
               <h4>Read this Ditema text:</h4>
               <div className="ditema-visual">
-                {/* This would show the actual Ditema rendering */}
-                <div className="ditema-placeholder">
-                  {currentStoryData.ditemaText.split('').map((char, index) => (
-                    <span key={index} className="ditema-char">{char}</span>
-                  ))}
-                </div>
+                <DitemaCanvas elements={ditemaElements} width={400} height={150} />
               </div>
             </div>
 

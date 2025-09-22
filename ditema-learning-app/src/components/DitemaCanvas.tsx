@@ -79,6 +79,11 @@ const DitemaCanvas: React.FC<DitemaCanvasProps> = ({
     ctx.lineTo(x + halfSize, y + halfSize);
     ctx.closePath();
     ctx.stroke();
+    
+    // Add a subtle fill
+    ctx.fillStyle = 'rgba(102, 126, 234, 0.1)';
+    ctx.fill();
+    ctx.fillStyle = '#667eea'; // Reset for other elements
   };
 
   const drawCircle = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
@@ -86,6 +91,11 @@ const DitemaCanvas: React.FC<DitemaCanvasProps> = ({
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, 2 * Math.PI);
     ctx.stroke();
+    
+    // Add a subtle fill
+    ctx.fillStyle = 'rgba(30, 30, 30, 0.05)';
+    ctx.fill();
+    ctx.fillStyle = '#1e1e1e'; // Reset for other elements
   };
 
   const drawDot = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
